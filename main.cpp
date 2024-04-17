@@ -331,7 +331,11 @@ struct BOID{
 
     private: void colourPreds(){
         if(isPred){
-            tri.setFillColor(sf::Color::Red);
+            if(nachbar > 0){
+                tri.setFillColor(sf::Color::Red);
+            } else{
+                tri.setFillColor(sf::Color::Blue);
+            }
         } else{
             if(predCount > 0){
                 tri.setFillColor(sf::Color::Yellow);
