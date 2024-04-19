@@ -1,7 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <stdlib.h>
 #include <math.h>
-#include "/home/cuong/codeblocks/boids/src/ui.cpp"
+#include "./src/ui.cpp"
 
 struct BOID{
     int id;
