@@ -290,21 +290,21 @@ struct BOID{
 
     private: void colourNachbar(){
         float t = ((float)nachbar)/5;
-        tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));
+        colourCycle(t);
     }
 
     private: void colourSpeed(){
         float t = (std::abs(v.x)+std::abs(v.y))*3/vMax ;
-        tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));
+        colourCycle(t);
     }
 
     private: void colourDirection(){
-        tri.setFillColor(sf::Color(periodic(dir),periodic(dir+1.5f),periodic(dir+3.f),255));
+        colourCycle(dir);
     }
 
     private: void colourRange(){
         float t = -(nbRange/maxNbRange)*6.5f  ;   //*6.5f ;
-        tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));
+        colourCycle(t);
     }
 
     private: void colourDirSpeed(){
@@ -316,17 +316,20 @@ struct BOID{
 
     private: void colourId(){    // ~ 12/Periode
         float t = ((float)id)/2;
-        tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));
+        colourCycle(t);
     }
 
     private: void colourHash(){    //
         float t = hashPos;
-        tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));
+        colourCycle(t);
         /*tri.setFillColor(sf::Color::Green);
         if(hashPos < 50)
             tri.setFillColor(sf::Color::Red);*/
 
     }
+
+    private: void colourCycle(float t){
+    tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));}
 
     private: void colourPreds(){
         if(isPred){

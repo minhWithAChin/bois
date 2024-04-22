@@ -21,21 +21,52 @@ bool BOID::normMov;
 bool BOID::wrap;
 bool BOID::dynRange;
 
+    const int breite = 1800;
+    const int hoehe = 960; // Breite und Höhe des Fensters
+    const int nGes = 1000;
+    const int zellenGes = 1080;
+    const int predGes = 0;
+    int n = 0;
+    int colour_mode = 4;
+    bool mouseAvoid = true;
+    BOID* pZellen[zellenGes];
+    BOID* pBoid[nGes];
+    BOID* pMouseBoid;
+
 void checkChunk(BOID* chunkID, BOID* boidID){
     if(chunkID != nullptr){
             (*chunkID).istNachbarR(boidID);
         }
 }
 
-int main(){ //Mainsetup
-    const int breite = 1800;
-    const int hoehe = 960; // Breite und Höhe des Fensters
-    const int nGes = 1000;
-    const int zellenGes = 1080;
-    const int predGes = 3;
-    int n = 0;
-    int colour_mode = 4;
+void nachbarCheck(BOID* pBoi){
+    int hash_pos = (*pBoi).hashPos;
+    checkChunk(pZellen[hash_pos],pBoi); //position auf numpad 5
+    if(hash_pos > BOID::zpR){
+        checkChunk(pZellen[hash_pos-1],pBoi); // 4
+        checkChunk(pZellen[hash_pos-1-BOID::zpR],pBoi); // 7
+        checkChunk(pZellen[hash_pos-BOID::zpR],pBoi); // 8
+        checkChunk(pZellen[hash_pos+1-BOID::zpR],pBoi); // 9
+        if(hash_pos < zellenGes-2-BOID::zpR){
+            checkChunk(pZellen[hash_pos+1],pBoi); // 6
+            checkChunk(pZellen[hash_pos-1+BOID::zpR],pBoi); // 1
+            checkChunk(pZellen[hash_pos+BOID::zpR],pBoi); // 2
+            checkChunk(pZellen[hash_pos+1+BOID::zpR],pBoi); // 3
+        }
+    }
+}
 
+void gridInsert(BOID* pBoi){
+    (*pBoi).next = nullptr;
+    int hash_pos = (*pBoi).hashPos;
+    if(pZellen[hash_pos] == nullptr){
+        pZellen[hash_pos] = pBoi;
+    } else{
+        (*pZellen[hash_pos]).insertPBoid(pBoi);
+    }
+}
+
+int main(){ //Mainsetup
     sf::RenderWindow window(sf::VideoMode(breite, hoehe), "BOIS");
     sf::RenderWindow* pWindow = &window;
     window.setFramerateLimit(60);
@@ -44,11 +75,8 @@ int main(){ //Mainsetup
     sf::Clock uhr;
     sf::Time delta_t = uhr.restart();
 sf::Vector2f v(0, 0);
-    UI params(v, 6, 10, 5, 12, 24);
+    UI params(v, 7, 10, 5, 12, 24);
 
-    BOID* pZellen[zellenGes];
-
-    BOID* pBoid[nGes];
     //BOID* aktiv;
     //sf::Vector2f boidPos[nGes];
     //sf::Vector2f boidV[nGes];
@@ -88,6 +116,7 @@ sf::Vector2f v(0, 0);
     params.nameInsert("dynRange");
     params.nameInsert("colourMode");
     params.nameInsert("Anzahl");
+    params.nameInsert("mouseAvoid");
 
 /*    params.updateWert(0, BOID::margin);
     params.updateWert(1, BOID::borStrength);
@@ -103,6 +132,7 @@ sf::Vector2f v(0, 0);
     params.updateWert(2, BOID::wrap);
     params.updateWert(3, BOID::dynRange);
     params.updateMode(4, colour_mode);
+    params.updateWert(6, mouseAvoid);
     params.placeLines();
 /*
     for(int i = 0; i < nGes; i++){
@@ -111,6 +141,8 @@ sf::Vector2f v(0, 0);
         n = nGes;
         params.updateWert(5,n);
 */
+    pMouseBoid = new BOID(1001, true);
+
  std::srand(delta_t.asMilliseconds()+1000);
     //Ende Mainsetup
     while(window.isOpen()){
@@ -143,12 +175,19 @@ sf::Vector2f v(0, 0);
                              n = 0; break;
                     default: break;
                 }
-
                 params.updateWert(0, BOID::aliStrength);
                 params.updateWert(1, BOID::normMov);
                 params.updateWert(2, BOID::wrap);
                 params.updateWert(3, BOID::dynRange);
                 params.updateMode(4, colour_mode);
+            }
+            if(event.type == sf::Event::MouseButtonReleased){
+                mouseAvoid = !mouseAvoid;
+                params.updateWert(6, mouseAvoid);
+            }
+            if(mouseAvoid){
+                (*pMouseBoid).tri.setPosition((sf::Vector2f)sf::Mouse::getPosition(*pWindow));
+                (*pMouseBoid).spatialHash();
             }
         }
         //Mainloop
@@ -160,46 +199,25 @@ sf::Vector2f v(0, 0);
         }
 
         for(int i = 0; i < zellenGes; i++){ //zellen leeren
-                pZellen[i] = nullptr;
+            pZellen[i] = nullptr;
         }
 
         for(int i = 0; i < n; i++){ // Insert in grid loop
-            (*pBoid[i]).next = nullptr;
-            int hash_pos = (*pBoid[i]).hashPos;
-            if(pZellen[hash_pos] == nullptr){
-                pZellen[hash_pos] = pBoid[i];
-            } else{
-                (*pZellen[hash_pos]).insertPBoid(pBoid[i]);
-            }
-            //boidPos[i] = (*pZellen[i]).tri.getPosition();
-            //boidV[i] = (*pZellen[i]).v;
-            /*for(int j = 0; j < n; j++){
-                (*pBoid[i]).istNachbarR(pBoid[j]);
-            }*/
+            gridInsert(pBoid[i]);
         }
+        gridInsert(pMouseBoid);
 
-         for(int i = 0; i < n; i++){ // nachbarcheckloop
-            int hash_pos = (*pBoid[i]).hashPos;
-            checkChunk(pZellen[hash_pos],pBoid[i]); //position auf numpad 5
-            if(hash_pos > BOID::zpR){
-                checkChunk(pZellen[hash_pos-1],pBoid[i]); // 4
-                checkChunk(pZellen[hash_pos-1-BOID::zpR],pBoid[i]); // 7
-                checkChunk(pZellen[hash_pos-BOID::zpR],pBoid[i]); // 8
-                checkChunk(pZellen[hash_pos+1-BOID::zpR],pBoid[i]); // 9
-                if(hash_pos < zellenGes-2-BOID::zpR){
-                    checkChunk(pZellen[hash_pos+1],pBoid[i]); // 6
-                    checkChunk(pZellen[hash_pos-1+BOID::zpR],pBoid[i]); // 1
-                    checkChunk(pZellen[hash_pos+BOID::zpR],pBoid[i]); // 2
-                    checkChunk(pZellen[hash_pos+1+BOID::zpR],pBoid[i]); // 3
-                }
-            }
+        for(int i = 0; i < n; i++){ // nachbarcheckloop
+            nachbarCheck(pBoid[i]);
         }
+        nachbarCheck(pMouseBoid);
 
         delta_t = uhr.restart();
         window.clear(sf::Color(175,175,175,255)); //175
         for(int i = 0; i < n; i++){ // bewegen + renderloop
             (*pBoid[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
             (*pBoid[i]).drawBoid(pWindow);
+            (*pMouseBoid).drawBoid(pWindow);
         }
         params.draw(pWindow );
         window.display();
@@ -207,6 +225,8 @@ sf::Vector2f v(0, 0);
     }
     for(int i = 0; i < n; i++){
         delete pBoid[i];
+
     }
+    delete pMouseBoid;
     return 0;
 }
