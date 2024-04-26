@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include "./src/ui.cpp"
 #include "./src/boid.cpp"
 
@@ -23,15 +24,19 @@ bool BOID::dynRange;
 
     const int breite = 1800;
     const int hoehe = 960; // Breite und Höhe des Fensters
-    const int nGes = 1000;
-    const int zellenGes = 1080;
-    const int predGes = 0;
+    const int nGes = 500*2;
+    const int zellenGes = 1080; //265
+    const int predGes = 1;
     int n = 0;
     int colour_mode = 4;
     bool mouseAvoid = true;
     BOID* pZellen[zellenGes];
     BOID* pBoid[nGes];
     BOID* pMouseBoid;
+    sf::RenderWindow window(sf::VideoMode(breite, hoehe), "BOIS");
+    sf::RenderWindow* pWindow = &window;
+    sf::Vector2f origin(0, 0);
+    UI params(origin, 7, 10, 5, 12, 24);
 
 void checkChunk(BOID* chunkID, BOID* boidID){
     if(chunkID != nullptr){
@@ -66,16 +71,64 @@ void gridInsert(BOID* pBoi){
     }
 }
 
+void eventhandler(){
+    sf::Event event;
+    while(window.pollEvent(event)){
+        if(event.type == sf::Event::Closed){
+            window.close();
+        }
+        if(event.type == sf::Event::KeyPressed){
+            switch(event.key.code){
+                case 75: colour_mode = 0; break;
+                case 76: colour_mode = 1; break;
+                case 77: colour_mode = 2; break;
+                case 78: colour_mode = 3; break;
+                case 79: colour_mode = 4; break;
+                case 80: colour_mode = 5; break;
+                case 81: colour_mode = 6; break;
+                case 82: BOID::wrap = !BOID::wrap; break;
+                case 83: BOID::dynRange = !BOID::dynRange; break;
+                case 84: colour_mode = 7; break;
+                case 68: BOID::normMov = false;
+                         BOID::aliStrength = 0.25;
+                         BOID::margin = 120; break;
+                case 67: BOID::normMov = true;
+                         BOID::aliStrength = 0.75;
+                         BOID::margin = 60; break;
+                case 13: for(int i = 0; i < n; i++){
+                                delete pBoid[i];
+                            }
+                            n = 0; break;
+                default: break;
+            }
+            params.updateWert(0, BOID::aliStrength);
+            params.updateWert(1, BOID::normMov);
+            params.updateWert(2, BOID::wrap);
+            params.updateWert(3, BOID::dynRange);
+            params.updateMode(4, colour_mode);
+        }
+        if(event.type == sf::Event::MouseButtonReleased){
+            switch(event.mouseButton.button)
+                case 1:
+                    mouseAvoid = !mouseAvoid;
+                    params.updateWert(6, mouseAvoid);
+                    break;
+        }
+        if(mouseAvoid){
+            (*pMouseBoid).tri.setPosition((sf::Vector2f)sf::Mouse::getPosition(*pWindow));
+            (*pMouseBoid).spatialHash();
+        }
+    }
+}
+
 int main(){ //Mainsetup
-    sf::RenderWindow window(sf::VideoMode(breite, hoehe), "BOIS");
-    sf::RenderWindow* pWindow = &window;
+
     window.setFramerateLimit(60);
     if(nGes > 600)
         window.setFramerateLimit(60);
     sf::Clock uhr;
     sf::Time delta_t = uhr.restart();
-sf::Vector2f v(0, 0);
-    UI params(v, 7, 10, 5, 12, 24);
+;
 
     //BOID* aktiv;
     //sf::Vector2f boidPos[nGes];
@@ -100,7 +153,8 @@ sf::Vector2f v(0, 0);
         BOID::wrap = true;
         BOID::dynRange = true;
 
-
+    std::cout << BOID::zpR << std::endl;
+    std::cout << hoehe/(BOID::maxNbRange) << std::endl;
 /*    params.nameInsert("margin");
     params.nameInsert("borStrength");
     params.nameInsert("vMax");
@@ -143,53 +197,10 @@ sf::Vector2f v(0, 0);
 */
     pMouseBoid = new BOID(1001, true);
 
- std::srand(delta_t.asMilliseconds()+1000);
+ std::srand(delta_t.asMilliseconds());
     //Ende Mainsetup
     while(window.isOpen()){
-        sf::Event event;
-        while(window.pollEvent(event)){
-            if(event.type == sf::Event::Closed){
-                window.close();
-            }
-            if(event.type == sf::Event::KeyPressed){
-                switch(event.key.code){
-                    case 75: colour_mode = 0; break;
-                    case 76: colour_mode = 1; break;
-                    case 77: colour_mode = 2; break;
-                    case 78: colour_mode = 3; break;
-                    case 79: colour_mode = 4; break;
-                    case 80: colour_mode = 5; break;
-                    case 81: colour_mode = 6; break;
-                    case 82: BOID::wrap = !BOID::wrap; break;
-                    case 83: BOID::dynRange = !BOID::dynRange; break;
-                    case 84: colour_mode = 7; break;
-                    case 68: BOID::normMov = false;
-                             BOID::aliStrength = 0.25;
-                             BOID::margin = 120; break;
-                    case 67: BOID::normMov = true;
-                             BOID::aliStrength = 0.75;
-                             BOID::margin = 60; break;
-                    case 13: for(int i = 0; i < n; i++){
-                                 delete pBoid[i];
-                             }
-                             n = 0; break;
-                    default: break;
-                }
-                params.updateWert(0, BOID::aliStrength);
-                params.updateWert(1, BOID::normMov);
-                params.updateWert(2, BOID::wrap);
-                params.updateWert(3, BOID::dynRange);
-                params.updateMode(4, colour_mode);
-            }
-            if(event.type == sf::Event::MouseButtonReleased){
-                mouseAvoid = !mouseAvoid;
-                params.updateWert(6, mouseAvoid);
-            }
-            if(mouseAvoid){
-                (*pMouseBoid).tri.setPosition((sf::Vector2f)sf::Mouse::getPosition(*pWindow));
-                (*pMouseBoid).spatialHash();
-            }
-        }
+        eventhandler();
         //Mainloop
 
         if(n < nGes){ // create loop
@@ -205,19 +216,22 @@ sf::Vector2f v(0, 0);
         for(int i = 0; i < n; i++){ // Insert in grid loop
             gridInsert(pBoid[i]);
         }
-        gridInsert(pMouseBoid);
+        if(mouseAvoid)
+            gridInsert(pMouseBoid);
 
         for(int i = 0; i < n; i++){ // nachbarcheckloop
             nachbarCheck(pBoid[i]);
         }
-        nachbarCheck(pMouseBoid);
+        if(mouseAvoid)
+            nachbarCheck(pMouseBoid);
 
         delta_t = uhr.restart();
         window.clear(sf::Color(175,175,175,255)); //175
         for(int i = 0; i < n; i++){ // bewegen + renderloop
             (*pBoid[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
             (*pBoid[i]).drawBoid(pWindow);
-            (*pMouseBoid).drawBoid(pWindow);
+            if(mouseAvoid)
+                (*pMouseBoid).drawBoid(pWindow);
         }
         params.draw(pWindow );
         window.display();

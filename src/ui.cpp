@@ -30,7 +30,7 @@ struct ZEILE{
         wert.setPosition(pos);
         sf::Vector2f name_pos(i_x - (length*i_width), i_y);
         name.setPosition(name_pos);
-        std::cout << name_pos.x <<" / " << name_pos.y << std::endl;
+//        std::cout << name_pos.x <<" / " << name_pos.y << std::endl;
 
     }
 };
@@ -44,7 +44,7 @@ struct UI{
     unsigned int longestString;
     bool needClear;
     sf::Font cMono;
-    ZEILE* pZeile[14];
+    ZEILE* pZeile[17];
 
     UI(sf::Vector2f i_position, int i_zeilen, int i_rand, int i_zeilenabstand, int i_abstand, float i_size){       //init
         pos=i_position; lines=i_zeilen; xMargin=i_rand; yMargin=i_zeilenabstand; space=i_abstand; charWidth = i_size*0.55; charHeight = i_size;

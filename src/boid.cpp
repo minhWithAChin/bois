@@ -211,17 +211,17 @@ struct BOID{
     }
 
     private: void vLimitPred(){
-        if(v.x > vMax/2 ){
-            v.x = vMax/2;}
+        if(v.x > vMax*0.9 ){
+            v.x = vMax*0.9;}
         else{
-            if(v.x < -vMax/2)
-                v.x = -vMax/2;}
+            if(v.x < -vMax*0.9)
+                v.x = -vMax*0.9;}
 
-        if(v.y > vMax/2){
-            v.y = vMax/2;}
+        if(v.y > vMax*0.9){
+            v.y = vMax*0.9;}
         else{
-            if(v.y < -vMax/2)
-                v.y = -vMax/2; }
+            if(v.y < -vMax*0.9)
+                v.y = -vMax*0.9; }
     }
 
     private: float selfDotP(sf::Vector2f vec){
@@ -246,7 +246,7 @@ struct BOID{
             // code
             sf::Vector2f deltaPos = tri.getPosition() - (*pAktiv).tri.getPosition();
             int dotDeltaPos = selfDotP(deltaPos);
-            if((*pAktiv).isPred){
+            if((*pAktiv).isPred && dotDeltaPos < maxNbRange*maxNbRange){
                 predCount++;
                 predPos += deltaPos;
                 avoidPred(deltaPos);
