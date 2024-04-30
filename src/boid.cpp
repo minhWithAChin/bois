@@ -37,16 +37,11 @@ struct BOID{
     sf::Vector2f predPos{0,0};
     BOID* next = nullptr;
 
-    BOID( int i, bool is_pred){ //Constructor
-        if(is_pred){
-            tri.setPointCount(4);
-            tri.setScale(1.5f,2.f);
-        }
+    BOID( int i){ //Constructor
         tri.setOrigin(7.f,7.f);
 //        gStrength = 256;    // Anziehungskraft/1 */
         m.x = wBreite/3;
         m.y = wHoehe/3;
-        isPred = is_pred;
         tri.setPosition(m);
         id = i;
         nachbar = 0;
@@ -54,30 +49,32 @@ struct BOID{
         colourId();
     }
 
-    public: void bewegen(int noise, float delta_t, int colour_mode){ //Bewegen
-        /*if(next != nullptr){
-            (*next).bewegen(noise, delta_t, colour_mode);
-        }*/
+    virtual void behavior(){    //unique class behaviors
         if(nachbar > 0){
             alignment();
                 if(nachbar > 1){
                 cohesion();
             }
         }
+    }
+
+    public: void bewegen(int noise, float delta_t, int colour_mode){ //Bewegen
+        behavior();
         nbRangeUpdate();
-        spatialHash();
-        faerben(colour_mode);
+        vLimit();
+        bMove(randDir(noise),delta_t);
         if(wrap){
             bWrap(tri.getPosition());
         } else{
             avoidBorder(tri.getPosition());
         }
-        if(isPred){
-            vLimitPred();
-        } else{
-            vLimit();
-        }
-        bMove(randDir(noise),delta_t);
+        spatialHash();
+        faerben(colour_mode);
+        resetVar();
+        return;
+    }
+
+    void resetVar(){
         nachbar = 0;
         predCount = 0;
         vNachbar.x = 0;
@@ -87,7 +84,6 @@ struct BOID{
         predPos.x = 0;
         predPos.y = 0;
 //        v.x--;v.y--;
-        return;
     }
 
     public: void spatialHash(){
@@ -116,13 +112,13 @@ struct BOID{
         }*/
     }
 
-    private: float dirUpdate(){
+    float dirUpdate(){
         if(v.x != 0)
             return std::atan2(v.y,v.x);
         return 0;
     }
 
-    private: void bMove(float newDir, float delta_t){
+    void bMove(float newDir, float delta_t){
         dir = dirUpdate() + newDir;
         tri.setRotation((dir+1.57)*57.3);
         if(normMov){
@@ -136,17 +132,17 @@ struct BOID{
         }
     }
 
-    private: float randDir(int noise){ // gibt random Wert zurück [-0,125; 0,125]
+    float randDir(int noise){ // gibt random Wert zurück [-0,125; 0,125]
         return  ((noise % 3)-1)*ranStrength;
     }
 
-    private: void rand_v(int noiseX, int noiseY){ // ändert V um random Wert
+    void rand_v(int noiseX, int noiseY){ // ändert V um random Wert
         //std::cout << ((noise % 3)-1) <<';';
         v.x += ((noiseX % 7)-3)*2*ranStrength;
         v.y -= ((noiseY % 5)-2)*ranStrength;
     }
 
-    private: void nbRangeUpdate(){
+    void nbRangeUpdate(){
         if(dynRange){
             if(nachbar < 6 && nbRange < maxNbRange){
                 nbRange++;
@@ -160,7 +156,7 @@ struct BOID{
         }
     }
 
-    private: void bWrap(sf::Vector2f pos){ // Wrap wenn es den Screenrand berührt //sollte in Main gehöhren
+    void bWrap(sf::Vector2f pos){ // Wrap wenn es den Screenrand berührt //sollte in Main gehöhren
         if(pos.x > wBreite){
             tri.move(-wBreite, 0);}
         else{
@@ -174,7 +170,7 @@ struct BOID{
                 tri.move(0, wHoehe);}
     }
 
-    private: void avoidBorder(sf::Vector2f pos){ // Wrap wenn es den Screenrand berührt //sollte in Main gehöhren
+    void avoidBorder(sf::Vector2f pos){ // Wrap wenn es den Screenrand berührt //sollte in Main gehöhren
         if(pos.x > wBreite - margin) {
             v.x -= borStrength;
             if(pos.x > wBreite) {
@@ -196,7 +192,7 @@ struct BOID{
                 v.y = vMax;}}
     }
 
-    private: void vLimit(){
+    virtual void vLimit(){
         if(v.x > vMax ){
             v.x = vMax-10;}
         else{
@@ -210,25 +206,11 @@ struct BOID{
                 v.y = -vMax+10; }
     }
 
-    private: void vLimitPred(){
-        if(v.x > vMax*0.9 ){
-            v.x = vMax*0.9;}
-        else{
-            if(v.x < -vMax*0.9)
-                v.x = -vMax*0.9;}
-
-        if(v.y > vMax*0.9){
-            v.y = vMax*0.9;}
-        else{
-            if(v.y < -vMax*0.9)
-                v.y = -vMax*0.9; }
-    }
-
-    private: float selfDotP(sf::Vector2f vec){
+    float selfDotP(sf::Vector2f vec){
         return vec.x*vec.x+vec.y*vec.y;
     }
-
-    public: void ist_nachbar(sf::Vector2f pos_nachbar, sf::Vector2f v_nachbar, int id2){ //prüft ob der Boid ein Nachbar ist und zählt
+/**
+    public: void ist_nachbar(sf::Vector2f pos_nachbar, sf::Vector2f v_nachbar, int id2){ //legacy
         if(id2 == id)
             return;
         sf::Vector2f deltaPos = tri.getPosition() - pos_nachbar;
@@ -240,27 +222,15 @@ struct BOID{
             separation(deltaPos, dotDeltaPos);
         }
     }
-
+*/
     public: void istNachbarR(BOID* pAktiv){ // recursiv
         if(pAktiv != this){
             // code
             sf::Vector2f deltaPos = tri.getPosition() - (*pAktiv).tri.getPosition();
             int dotDeltaPos = selfDotP(deltaPos);
-            if((*pAktiv).isPred && dotDeltaPos < maxNbRange*maxNbRange){
-                predCount++;
-                predPos += deltaPos;
-                avoidPred(deltaPos);
-            } else {
-                if(dotDeltaPos < nbRange*nbRange){
-                    nachbar++;
-                    vNachbar += (*pAktiv).v;
-                    m -= deltaPos;
-                    if(!isPred){
-                        separation(deltaPos, dotDeltaPos);
-                    }
-                }
+            if(dotDeltaPos < maxNbRange*maxNbRange){
+                nachbarReaction(deltaPos, dotDeltaPos, (*pAktiv).isPred, (*pAktiv).v);
             }
-
         }
         if(next == nullptr){
             return;
@@ -269,8 +239,24 @@ struct BOID{
         }
     }
 
+    virtual void nachbarReaction(sf::Vector2f deltaPos, int dotDeltaPos, bool is_pred, sf::Vector2f v_n){
+        if(is_pred){
+            predCount++;
+            predPos += deltaPos;
+            avoidPred(deltaPos);
+        } else {
+            if(dotDeltaPos < nbRange*nbRange){
+                nachbar++;
+                vNachbar += v_n;
+                m -= deltaPos;
+                if(!isPred){
+                    separation(deltaPos, dotDeltaPos);
+                }
+            }
+        }
+    }
 
-    private: void faerben(int colour_mode){
+    void faerben(int colour_mode){
         if(colour_mode != colourMode){
             colourMode = colour_mode;
             if(colour_mode == 0){
@@ -288,70 +274,57 @@ struct BOID{
         }
     }
 
-    private: void colourNachbar(){
-        float t = ((float)nachbar)/5;
-        colourCycle(t);
+    void colourNachbar(){
+        colourCycle(((float)nachbar)/5);
     }
 
-    private: void colourSpeed(){
-        float t = (std::abs(v.x)+std::abs(v.y))*3/vMax ;
-        colourCycle(t);
+    void colourSpeed(){
+        colourCycle((std::abs(v.x)+std::abs(v.y))*3/vMax);
     }
 
-    private: void colourDirection(){
+    void colourDirection(){
         colourCycle(dir);
     }
 
-    private: void colourRange(){
-        float t = -(nbRange/maxNbRange)*6.5f  ;   //*6.5f ;
-        colourCycle(t);
+    void colourRange(){   //*6.5f ;
+        colourCycle(-(nbRange/maxNbRange)*6.5f);
     }
 
-    private: void colourDirSpeed(){
-        int t1 = ((v.x+vMax)/vMax)*128;
-        int t2 = ((v.y+vMax)/vMax)*128;
-        int t3 = (512-t1-t2)/2;
-        tri.setFillColor(sf::Color(t3-1,t2-1,t1-1,255));
+    void colourDirSpeed(){
+        float t1 = ((v.x+vMax)/vMax)*128;
+        float t2 = ((v.y+vMax)/vMax)*128;
+        float t3 = (512-t1-t2)/2;
+        tri.setFillColor(sf::Color(t3,t2,t1,255));
     }
 
-    private: void colourId(){    // ~ 12/Periode
-        float t = ((float)id)/2;
-        colourCycle(t);
+    void colourId(){    // ~1536/Periode
+        colourCycle(((float)id)/256);
     }
 
-    private: void colourHash(){    //
-        float t = hashPos;
-        colourCycle(t);
+    void colourHash(){    //
+        colourCycle(hashPos);
         /*tri.setFillColor(sf::Color::Green);
         if(hashPos < 50)
             tri.setFillColor(sf::Color::Red);*/
 
     }
 
-    private: void colourCycle(float t){
+    void colourCycle(float t){
     tri.setFillColor(sf::Color(periodic(t),periodic(t+1.5f),periodic(t+3.f),255));}
 
-    private: void colourPreds(){
-        if(isPred){
-            if(nachbar > 0){
-                tri.setFillColor(sf::Color::Red);
-            } else{
-                tri.setFillColor(sf::Color::Blue);
-            }
+    virtual void colourPreds(){
+        if(predCount > 0){
+            tri.setFillColor(sf::Color::Yellow);
         } else{
-            if(predCount > 0){
-                tri.setFillColor(sf::Color::Yellow);
-            } else{
-                tri.setFillColor(sf::Color::Green);
-            }
+            tri.setFillColor(sf::Color::Green);
         }
     }
 
-    private: void boidRotate(){
+    void boidRotate(){
         tri.setRotation(sin(v.y));
         }
 
-    private: void separation(sf::Vector2f deltaPos, int dotDeltaPos){
+    void separation(sf::Vector2f deltaPos, int dotDeltaPos){
         if(deltaPos.x !=0 && deltaPos.y != 0){
             if(dotDeltaPos < sepRangeSq && sepStrength > 0){
                 v.x += sepStrength/deltaPos.x;
@@ -360,7 +333,7 @@ struct BOID{
         }
     }
 
-    private: void alignment(){
+    void alignment(){
         sf::Vector2f deltaVNachbar((vNachbar.x/nachbar)-v.x, ((vNachbar.y/nachbar)-v.y)); // Berechnet Abweichung vom Durchschnitt der Nachbarn
         if(isPred){
             v.x += deltaVNachbar.x*aliStrength*swarmFollow;
@@ -371,19 +344,79 @@ struct BOID{
         }
     }
 
-    private: void cohesion(){
+    void cohesion(){
         v.x += aliStrength*m.x/nachbar;
         v.y += aliStrength*m.y/nachbar;
     }
 
-    private: void avoidPred(sf::Vector2f deltaPos){
+    void avoidPred(sf::Vector2f deltaPos){
         v.x += fleeStrength/deltaPos.x;
         v.y += fleeStrength/deltaPos.y;
     }
 
-    private: sf::Uint8 periodic(float t){
+    sf::Uint8 periodic(float t){
         return (sf::Uint8)(std::round((std::sin(t)+1)*127));
 
     }
 
+};
+
+struct PRED : BOID{
+    sf::Vector2f targetDeltaPos;
+    float shortDist;
+
+    PRED(int i):BOID(i){
+        tri.setPointCount(4);
+        tri.setScale(1.5f,2.f);
+        BOID::isPred = true;
+    }
+
+    void behavior() override{ //Bewegen
+
+            hunt(targetDeltaPos);
+
+    }
+
+    void nachbarReaction(sf::Vector2f deltaPos, int dotDeltaPos, bool is_pred, sf::Vector2f v_n) override{
+        if(is_pred){
+            predCount++;
+            predPos += deltaPos;
+            avoidPred(deltaPos);
+            separation(deltaPos, dotDeltaPos);
+        } else{
+            if(nachbar == 0 || dotDeltaPos < shortDist){
+                    targetDeltaPos = deltaPos;
+                    shortDist = dotDeltaPos;
+                    nachbar++;
+            }
+        }
+    }
+
+    void vLimit() override {
+        if(v.x > vMax*0.5 ){
+            v.x = vMax*0.5;}
+        else{
+            if(v.x < -vMax*0.5)
+                v.x = -vMax*0.5;}
+
+        if(v.y > vMax*0.5){
+            v.y = vMax*0.5;}
+        else{
+            if(v.y < -vMax*0.5)
+                v.y = -vMax*0.5; }
+    }
+
+    void colourPreds() override{
+        if(nachbar > 0){
+            tri.setFillColor(sf::Color::Red);
+        } else{
+            tri.setFillColor(sf::Color::Blue);
+        }
+    }
+
+
+    void hunt(sf::Vector2f deltaPos){
+        v.x -= deltaPos.x;
+        v.y -= deltaPos.y;
+    }
 };

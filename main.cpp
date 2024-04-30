@@ -24,15 +24,17 @@ bool BOID::dynRange;
 
     const int breite = 1800;
     const int hoehe = 960; // Breite und Höhe des Fensters
-    const int nGes = 500*2;
+    const int nGes = 500;
     const int zellenGes = 1080; //265
-    const int predGes = 1;
+    const char predGes = 2;
     int n = 0;
+    char nPred = 0;
     int colour_mode = 4;
     bool mouseAvoid = true;
     BOID* pZellen[zellenGes];
     BOID* pBoid[nGes];
-    BOID* pMouseBoid;
+    PRED* pPred[predGes];
+    PRED* pMouseBoid;
     sf::RenderWindow window(sf::VideoMode(breite, hoehe), "BOIS");
     sf::RenderWindow* pWindow = &window;
     sf::Vector2f origin(0, 0);
@@ -98,7 +100,11 @@ void eventhandler(){
                 case 13: for(int i = 0; i < n; i++){
                                 delete pBoid[i];
                             }
-                            n = 0; break;
+                            n = 0;
+                            for(int i = 0; i < nPred; i++){
+                                delete pPred[i];
+                            }
+                            nPred = 0; break;
                 default: break;
             }
             params.updateWert(0, BOID::aliStrength);
@@ -195,7 +201,7 @@ int main(){ //Mainsetup
         n = nGes;
         params.updateWert(5,n);
 */
-    pMouseBoid = new BOID(1001, true);
+    pMouseBoid = new PRED(1001);
 
  std::srand(delta_t.asMilliseconds());
     //Ende Mainsetup
@@ -204,23 +210,35 @@ int main(){ //Mainsetup
         //Mainloop
 
         if(n < nGes){ // create loop
-            pBoid[n] = new BOID(n,(nGes-n)<=predGes);
+            pBoid[n] = new BOID(n);
             n++;
             params.updateWert(5,n);
+        } else{
+            if(nPred < predGes){ // create loop
+                pPred[nPred] = new PRED(n+nPred);
+                nPred++;
+                params.updateWert(5,n+nPred);
+            }
         }
 
         for(int i = 0; i < zellenGes; i++){ //zellen leeren
             pZellen[i] = nullptr;
         }
 
-        for(int i = 0; i < n; i++){ // Insert in grid loop
+        for(int i = 0; i < n; i++){ // Insert Boids in grid loop
             gridInsert(pBoid[i]);
+        }
+        for(int i = 0; i < nPred; i++){ // Insert Preds in grid loop
+            gridInsert(pPred[i]);
         }
         if(mouseAvoid)
             gridInsert(pMouseBoid);
 
-        for(int i = 0; i < n; i++){ // nachbarcheckloop
+        for(int i = 0; i < n; i++){ // nachbarcheckloop for boids
             nachbarCheck(pBoid[i]);
+        }
+        for(int i = 0; i < nPred; i++){ // nachbarcheckloop for preds
+            nachbarCheck(pPred[i]);
         }
         if(mouseAvoid)
             nachbarCheck(pMouseBoid);
@@ -230,16 +248,22 @@ int main(){ //Mainsetup
         for(int i = 0; i < n; i++){ // bewegen + renderloop
             (*pBoid[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
             (*pBoid[i]).drawBoid(pWindow);
-            if(mouseAvoid)
-                (*pMouseBoid).drawBoid(pWindow);
         }
+        for(int i = 0; i < nPred; i++){ // bewegen + renderloop
+            (*pPred[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
+            (*pPred[i]).drawBoid(pWindow);
+        }
+        if(mouseAvoid){
+            (*pMouseBoid).drawBoid(pWindow);}
         params.draw(pWindow );
         window.display();
         //Ende Mainloop
     }
     for(int i = 0; i < n; i++){
         delete pBoid[i];
-
+    }
+    for(int i = 0; i < nPred; i++){
+        delete pPred[i];
     }
     delete pMouseBoid;
     return 0;
