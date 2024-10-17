@@ -22,7 +22,6 @@ struct BOID{
     static float aliStrength;// Stärke der Richtungsangleichung
     static float cohStrength;// Stärke, in der Mitte seiner Nachbarn zu sein
     static int fleeStrength;// Stärke von der von Jägern geflohen wird
-    static float swarmFollow;// wie Stark die Jäger den Schwarm folgen
     static float sepRangeSq;// Reichweite ab der man abgestoßen wird (muss quadriert werden)
     static int maxNbRange;// maximale Nachbar Reichweite
     static int zpR ; // Zellen pro Reihe
@@ -34,7 +33,6 @@ struct BOID{
     sf::Vector2f vNachbar{0,0};  // Geschwindigket der Nachbarn
     sf::Vector2f v{0,0};        // berechnete Geschwindigkeit von selbst
     sf::Vector2f m;              // Abweichung von Mittelpunkt der Nachbarn
-    sf::Vector2f predPos{0,0};
     BOID* next = nullptr;
 
     BOID( int i){ //Constructor
@@ -56,11 +54,11 @@ struct BOID{
                 cohesion();
             }
         }
+        nbRangeUpdate();
     }
 
     public: void bewegen(int noise, float delta_t, int colour_mode){ //Bewegen
         behavior();
-        nbRangeUpdate();
         vLimit();
         bMove(randDir(noise),delta_t);
         if(wrap){
@@ -81,18 +79,18 @@ struct BOID{
         vNachbar.y = 0;
         m.x = 0;
         m.y = 0;
-        predPos.x = 0;
-        predPos.y = 0;
 //        v.x--;v.y--;
     }
 
     public: void spatialHash(){
-        hashPos = zpR*((int)tri.getPosition().y/(maxNbRange));
-        hashPos = hashPos + (int)tri.getPosition().x/(maxNbRange);
+        hashPos = zpR*((int)tri.getPosition().y/((int)maxNbRange));
+        hashPos = hashPos + (int)tri.getPosition().x/((int)maxNbRange);
         if(hashPos < 0)
             hashPos=0;
         if(hashPos >= 1080)  // maxZellen - 1
             hashPos = 1079;
+        if(hashPos < 0)  // keine negativen Zellen
+            hashPos = 0;
     }
 
     public: void insertPBoid(BOID* pBoid){
@@ -228,9 +226,9 @@ struct BOID{
             // code
             sf::Vector2f deltaPos = tri.getPosition() - (*pAktiv).tri.getPosition();
             int dotDeltaPos = selfDotP(deltaPos);
-            if(dotDeltaPos < maxNbRange*maxNbRange){
+
                 nachbarReaction(deltaPos, dotDeltaPos, (*pAktiv).isPred, (*pAktiv).v);
-            }
+
         }
         if(next == nullptr){
             return;
@@ -242,7 +240,6 @@ struct BOID{
     virtual void nachbarReaction(sf::Vector2f deltaPos, int dotDeltaPos, bool is_pred, sf::Vector2f v_n){
         if(is_pred){
             predCount++;
-            predPos += deltaPos;
             avoidPred(deltaPos);
         } else {
             if(dotDeltaPos < nbRange*nbRange){
@@ -287,13 +284,13 @@ struct BOID{
     }
 
     void colourRange(){   //*6.5f ;
-        colourCycle(-(nbRange/maxNbRange)*6.5f);
+        colourCycle(-(nbRange/maxNbRange)*7.5f+1.0f);
     }
 
-    void colourDirSpeed(){
-        float t1 = ((v.x+vMax)/vMax)*128;
-        float t2 = ((v.y+vMax)/vMax)*128;
-        float t3 = (512-t1-t2)/2;
+    virtual void colourDirSpeed(){
+        float t1 = (v.x/vMax)*128+127;
+        float t2 = (v.y/vMax)*128+127;
+        float t3 = (510-t1-t2)/2;
         tri.setFillColor(sf::Color(t3,t2,t1,255));
     }
 
@@ -335,13 +332,8 @@ struct BOID{
 
     void alignment(){
         sf::Vector2f deltaVNachbar((vNachbar.x/nachbar)-v.x, ((vNachbar.y/nachbar)-v.y)); // Berechnet Abweichung vom Durchschnitt der Nachbarn
-        if(isPred){
-            v.x += deltaVNachbar.x*aliStrength*swarmFollow;
-            v.y += deltaVNachbar.y*aliStrength*swarmFollow;
-        } else{
-            v.x += deltaVNachbar.x*aliStrength;
-            v.y += deltaVNachbar.y*aliStrength;
-        }
+        v.x += deltaVNachbar.x*aliStrength;
+        v.y += deltaVNachbar.y*aliStrength;
     }
 
     void cohesion(){
@@ -372,23 +364,22 @@ struct PRED : BOID{
     }
 
     void behavior() override{ //Bewegen
-
+        if(nachbar > 0){
             hunt(targetDeltaPos);
-
+        }
     }
 
     void nachbarReaction(sf::Vector2f deltaPos, int dotDeltaPos, bool is_pred, sf::Vector2f v_n) override{
         if(is_pred){
             predCount++;
-            predPos += deltaPos;
             avoidPred(deltaPos);
             separation(deltaPos, dotDeltaPos);
         } else{
             if(nachbar == 0 || dotDeltaPos < shortDist){
-                    targetDeltaPos = deltaPos;
-                    shortDist = dotDeltaPos;
-                    nachbar++;
+                targetDeltaPos = deltaPos;
+                shortDist = dotDeltaPos;
             }
+            nachbar++;
         }
     }
 
@@ -404,6 +395,13 @@ struct PRED : BOID{
         else{
             if(v.y < -vMax*0.5)
                 v.y = -vMax*0.5; }
+    }
+
+    void colourDirSpeed() override{
+        float t1 = (v.x/vMax)*256+127;
+        float t2 = (v.y/vMax)*256+127;
+        float t3 = (512-t1-t2)/2;
+        tri.setFillColor(sf::Color(t3,t2,t1,255));
     }
 
     void colourPreds() override{

@@ -14,7 +14,6 @@ int BOID::sepStrength;
 float BOID::aliStrength;
 float BOID::cohStrength;
 int BOID::fleeStrength;
-float BOID::swarmFollow;
 float BOID::sepRangeSq;
 int BOID::maxNbRange;
 int BOID::zpR;
@@ -24,13 +23,15 @@ bool BOID::dynRange;
 
     const int breite = 1800;
     const int hoehe = 960; // Breite und Höhe des Fensters
-    const int nGes = 500;
+    const char helligkeit = 100;
+    const int nGes = 500*2;
     const int zellenGes = 1080; //265
     const char predGes = 2;
     int n = 0;
     char nPred = 0;
-    int colour_mode = 4;
+    int colour_mode = 5;
     bool mouseAvoid = true;
+    bool spuren = false;
     BOID* pZellen[zellenGes];
     BOID* pBoid[nGes];
     PRED* pPred[predGes];
@@ -38,7 +39,7 @@ bool BOID::dynRange;
     sf::RenderWindow window(sf::VideoMode(breite, hoehe), "BOIS");
     sf::RenderWindow* pWindow = &window;
     sf::Vector2f origin(0, 0);
-    UI params(origin, 7, 10, 5, 12, 24);
+    UI params(origin, 10, 5, 12, 24);
 
 void checkChunk(BOID* chunkID, BOID* boidID){
     if(chunkID != nullptr){
@@ -105,6 +106,7 @@ void eventhandler(){
                                 delete pPred[i];
                             }
                             nPred = 0; break;
+                case 69: spuren=!spuren; break;
                 default: break;
             }
             params.updateWert(0, BOID::aliStrength);
@@ -112,13 +114,16 @@ void eventhandler(){
             params.updateWert(2, BOID::wrap);
             params.updateWert(3, BOID::dynRange);
             params.updateMode(4, colour_mode);
+            params.updateWert(7, spuren);
         }
         if(event.type == sf::Event::MouseButtonReleased){
-            switch(event.mouseButton.button)
+            switch(event.mouseButton.button){
                 case 1:
                     mouseAvoid = !mouseAvoid;
                     params.updateWert(6, mouseAvoid);
                     break;
+                default: break;
+                }
         }
         if(mouseAvoid){
             (*pMouseBoid).tri.setPosition((sf::Vector2f)sf::Mouse::getPosition(*pWindow));
@@ -147,11 +152,10 @@ int main(){ //Mainsetup
         BOID::borStrength = 18;
         BOID::vMax = 512;
         BOID::ranStrength = 0.125;
-        BOID::sepStrength = 126;
+        BOID::sepStrength = 200;
         BOID::aliStrength = 0.25;//0.125;
         BOID::cohStrength = 1;
         BOID::fleeStrength = 512;
-        BOID::swarmFollow = 0.125;
         BOID::sepRangeSq = 15*15;
         BOID::maxNbRange = 40;
         BOID::zpR = breite/(BOID::maxNbRange);
@@ -161,45 +165,47 @@ int main(){ //Mainsetup
 
     std::cout << BOID::zpR << std::endl;
     std::cout << hoehe/(BOID::maxNbRange) << std::endl;
-/*    params.nameInsert("margin");
+    /*params.nameInsert("margin");
     params.nameInsert("borStrength");
     params.nameInsert("vMax");
     params.nameInsert("ranStrength");
     params.nameInsert("sepStrength");*/
-    params.nameInsert("aliStrength");
-/*    params.nameInsert("cohStrength");
+    params.nameInsert("aliStrength");/*
+    params.nameInsert("cohStrength");
     params.nameInsert("sepRange");
-    params.nameInsert("maxNbRange");
-    params.nameInsert("normalVelo");*/
+    params.nameInsert("maxNbRange");*/
+    //params.nameInsert("normalVelo");
     params.nameInsert("normMov");
     params.nameInsert("wrap");
     params.nameInsert("dynRange");
     params.nameInsert("colourMode");
     params.nameInsert("Anzahl");
     params.nameInsert("mouseAvoid");
+    params.nameInsert("Spuren");
 
-/*    params.updateWert(0, BOID::margin);
-    params.updateWert(1, BOID::borStrength);
-    params.updateWert(2, BOID::vMax);
-    params.updateWert(3, BOID::ranStrength);
-    params.updateWert(4, BOID::sepStrength);*/
-    params.updateWert(0, BOID::aliStrength);
-/*    params.updateWert(6, BOID::cohStrength);
-    params.updateWert(7, std::sqrt(BOID::sepRangeSq) );
-    params.updateWert(8, BOID::maxNbRange);
-    params.updateWert(9, BOID::v_rua);*/
+    //params.updateWert(0, BOID::margin);
+    //params.updateWert(1, BOID::borStrength);
+    //params.updateWert(2, BOID::vMax);
+    /*params.updateWert(0, BOID::ranStrength);
+    params.updateWert(1, BOID::sepStrength);*/
+    params.updateWert(0, BOID::aliStrength);/*
+    params.updateWert(3, BOID::cohStrength);
+    params.updateWert(4, std::sqrt(BOID::sepRangeSq) );
+    params.updateWert(5, BOID::maxNbRange);
+    //params.updateWert(9, BOID::v_rua);*/
     params.updateWert(1, BOID::normMov);
     params.updateWert(2, BOID::wrap);
     params.updateWert(3, BOID::dynRange);
     params.updateMode(4, colour_mode);
     params.updateWert(6, mouseAvoid);
+    params.updateWert(7, spuren);
     params.placeLines();
 /*
     for(int i = 0; i < nGes; i++){
         pBoid[i] = new BOID(i);
         }
         n = nGes;
-        params.updateWert(5,n);
+        //params.updateWert(5,n);
 */
     pMouseBoid = new PRED(1001);
 
@@ -215,7 +221,7 @@ int main(){ //Mainsetup
             params.updateWert(5,n);
         } else{
             if(nPred < predGes){ // create loop
-                pPred[nPred] = new PRED(n+nPred);
+                pPred[((int)nPred)] = new PRED(n+nPred);
                 nPred++;
                 params.updateWert(5,n+nPred);
             }
@@ -244,7 +250,8 @@ int main(){ //Mainsetup
             nachbarCheck(pMouseBoid);
 
         delta_t = uhr.restart();
-        window.clear(sf::Color(175,175,175,255)); //175
+        if(!spuren)
+            window.clear(sf::Color(helligkeit,helligkeit,helligkeit,255)); //175
         for(int i = 0; i < n; i++){ // bewegen + renderloop
             (*pBoid[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
             (*pBoid[i]).drawBoid(pWindow);
@@ -259,12 +266,8 @@ int main(){ //Mainsetup
         window.display();
         //Ende Mainloop
     }
-    for(int i = 0; i < n; i++){
-        delete pBoid[i];
-    }
-    for(int i = 0; i < nPred; i++){
-        delete pPred[i];
-    }
-    delete pMouseBoid;
+    //delete[] pBoid;
+    //delete[] pPred;
+    //delete pMouseBoid;
     return 0;
 }
