@@ -30,7 +30,7 @@ struct ZEILE{
         wert.setPosition(pos);
         sf::Vector2f name_pos(i_x - (length*i_width), i_y);
         name.setPosition(name_pos);
-        std::cout << name_pos.x <<" / " << name_pos.y << std::endl;
+        //std::cout << name_pos.x <<" / " << name_pos.y << std::endl;
 
     }
 };

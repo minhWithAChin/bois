@@ -163,8 +163,8 @@ int main(){ //Mainsetup
         BOID::wrap = true;
         BOID::dynRange = true;
 
-    std::cout << BOID::zpR << std::endl;
-    std::cout << hoehe/(BOID::maxNbRange) << std::endl;
+    //std::cout << BOID::zpR << std::endl;
+    //std::cout << hoehe/(BOID::maxNbRange) << std::endl;
     /*params.nameInsert("margin");
     params.nameInsert("borStrength");
     params.nameInsert("vMax");
