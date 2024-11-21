@@ -44,10 +44,10 @@ struct UI{
     unsigned int longestString;
     bool needClear;
     sf::Font cMono;
-    ZEILE* pZeile[8];
+    ZEILE* pZeile[9];
 
     UI(sf::Vector2f i_position, int i_rand, int i_zeilenabstand, int i_abstand, float i_size){       //init
-        pos=i_position; lines=8; xMargin=i_rand; yMargin=i_zeilenabstand; space=i_abstand; charWidth = i_size*0.55; charHeight = i_size;
+        pos=i_position; lines=9; xMargin=i_rand; yMargin=i_zeilenabstand; space=i_abstand; charWidth = i_size*0.55; charHeight = i_size;
         if (!cMono.loadFromFile("ComicMono.ttf")){
             std::cout << "ComicMono.ttf not found";
         }

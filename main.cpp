@@ -20,6 +20,7 @@ int BOID::zpR;
 bool BOID::normMov;
 bool BOID::wrap;
 bool BOID::dynRange;
+bool BOID::noMov;
 
     const int breite = 1800;
     const int hoehe = 960; // Breite und Höhe des Fensters
@@ -107,6 +108,7 @@ void eventhandler(){
                             }
                             nPred = 0; break;
                 case 69: spuren=!spuren; break;
+                case 70: BOID::noMov=!BOID::noMov; break;
                 default: break;
             }
             params.updateWert(0, BOID::aliStrength);
@@ -115,6 +117,7 @@ void eventhandler(){
             params.updateWert(3, BOID::dynRange);
             params.updateMode(4, colour_mode);
             params.updateWert(7, spuren);
+            params.updateWert(8, BOID::noMov);
         }
         if(event.type == sf::Event::MouseButtonReleased){
             switch(event.mouseButton.button){
@@ -153,7 +156,7 @@ int main(){ //Mainsetup
         BOID::vMax = 512;
         BOID::ranStrength = 0.125;
         BOID::sepStrength = 200;
-        BOID::aliStrength = 0.25;//0.125;
+        BOID::aliStrength = 0.5;//0.125;
         BOID::cohStrength = 1;
         BOID::fleeStrength = 512;
         BOID::sepRangeSq = 15*15;
@@ -162,6 +165,7 @@ int main(){ //Mainsetup
         BOID::normMov = false;
         BOID::wrap = true;
         BOID::dynRange = true;
+        BOID::noMov=false;
 
     //std::cout << BOID::zpR << std::endl;
     //std::cout << hoehe/(BOID::maxNbRange) << std::endl;
@@ -182,6 +186,7 @@ int main(){ //Mainsetup
     params.nameInsert("Anzahl");
     params.nameInsert("mouseAvoid");
     params.nameInsert("Spuren");
+    params.nameInsert("Kriechen");
 
     //params.updateWert(0, BOID::margin);
     //params.updateWert(1, BOID::borStrength);
@@ -199,6 +204,7 @@ int main(){ //Mainsetup
     params.updateMode(4, colour_mode);
     params.updateWert(6, mouseAvoid);
     params.updateWert(7, spuren);
+    params.updateWert(8, BOID::noMov);
     params.placeLines();
 /*
     for(int i = 0; i < nGes; i++){

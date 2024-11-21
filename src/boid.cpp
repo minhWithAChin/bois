@@ -28,6 +28,7 @@ struct BOID{
     static bool normMov;// Normalized Movement?
     static bool wrap;// Screenwrap?
     static bool dynRange;// Dynamic Nachbar Range
+    static bool noMov; 
 
     sf::CircleShape tri{7,3};
     sf::Vector2f vNachbar{0,0};  // Geschwindigket der Nachbarn
@@ -79,7 +80,9 @@ struct BOID{
         vNachbar.y = 0;
         m.x = 0;
         m.y = 0;
-//        v.x--;v.y--;
+        if(noMov){
+            v.x =0 ;v.y=0;
+        }
     }
 
     public: void spatialHash(){
@@ -111,21 +114,19 @@ struct BOID{
     }
 
     float dirUpdate(){
-        if(v.x != 0)
-            return std::atan2(v.y,v.x);
-        return 0;
+        return std::atan2(v.y,v.x);
     }
 
-    void bMove(float newDir, float delta_t){
-        dir = dirUpdate() + newDir;
-        tri.setRotation((dir+1.57)*57.3);
+    void bMove(float ranDir, float delta_t){
+        dir = dirUpdate() + ranDir;
+        tri.setRotation((dir+1.57)*57.3); // convert RAD to DEG and Rotates Sprite by 90°
         if(normMov){
             v.x = cos(dir)*v_rua;
             v.y = sin(dir)*v_rua;
             tri.move(v*delta_t);
         } else{
-            v.x += cos(dir+newDir);
-            v.y += sin(dir+newDir);
+            v.x += cos(dir);
+            v.y += sin(dir);
             tri.move(v*delta_t);
         }
     }
