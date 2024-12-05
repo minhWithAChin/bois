@@ -155,10 +155,10 @@ int main(){ //Mainsetup
         BOID::borStrength = 18;
         BOID::vMax = 512;
         BOID::ranStrength = 0.125;
-        BOID::sepStrength = 200;
+        BOID::sepStrength = 150;
         BOID::aliStrength = 0.5;//0.125;
         BOID::cohStrength = 1;
-        BOID::fleeStrength = 512;
+        BOID::fleeStrength = 256;
         BOID::sepRangeSq = 15*15;
         BOID::maxNbRange = 40;
         BOID::zpR = breite/(BOID::maxNbRange);

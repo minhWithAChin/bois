@@ -34,6 +34,8 @@ struct BOID{
     sf::Vector2f vNachbar{0,0};  // Geschwindigket der Nachbarn
     sf::Vector2f v{0,0};        // berechnete Geschwindigkeit von selbst
     sf::Vector2f m;              // Abweichung von Mittelpunkt der Nachbarn
+    sf::Vector2f sepBuffer;              // speichert deltaV der Seperation
+    sf::Vector2f avoidBuffer;              // speichert deltaV der Ausweichfunktion  
     BOID* next = nullptr;
 
     BOID( int i){ //Constructor
@@ -55,6 +57,10 @@ struct BOID{
                 cohesion();
             }
         }
+        v.x += sepBuffer.x;
+        v.y += sepBuffer.y;
+        v.x += avoidBuffer.x;
+        v.y += avoidBuffer.y;
         nbRangeUpdate();
     }
 
@@ -80,6 +86,8 @@ struct BOID{
         vNachbar.y = 0;
         m.x = 0;
         m.y = 0;
+        sepBuffer={0,0};
+        avoidBuffer={0,0};
         if(noMov){
             v.x =0 ;v.y=0;
         }
@@ -325,8 +333,8 @@ struct BOID{
     void separation(sf::Vector2f deltaPos, int dotDeltaPos){
         if(deltaPos.x !=0 && deltaPos.y != 0){
             if(dotDeltaPos < sepRangeSq && sepStrength > 0){
-                v.x += sepStrength/deltaPos.x;
-                v.y += sepStrength/deltaPos.y;
+                sepBuffer.x += sepStrength/deltaPos.x;
+                sepBuffer.y += sepStrength/deltaPos.y;
             }
         }
     }
@@ -343,8 +351,8 @@ struct BOID{
     }
 
     void avoidPred(sf::Vector2f deltaPos){
-        v.x += fleeStrength/deltaPos.x;
-        v.y += fleeStrength/deltaPos.y;
+        avoidBuffer.x += fleeStrength/deltaPos.x;
+        avoidBuffer.y += fleeStrength/deltaPos.y;
     }
 
     sf::Uint8 periodic(float t){
