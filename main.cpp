@@ -97,7 +97,7 @@ void eventhandler(){
                          BOID::aliStrength = 0.25;
                          BOID::margin = 120; break;
                 case 67: BOID::normMov = true;
-                         BOID::aliStrength = 0.75;
+                         BOID::aliStrength = 0.5;
                          BOID::margin = 60; break;
                 case 13: for(int i = 0; i < n; i++){
                                 delete pBoid[i];
@@ -150,15 +150,15 @@ int main(){ //Mainsetup
 
         BOID::wBreite = breite;
         BOID::wHoehe = hoehe;
-        BOID::v_rua = 500;
+        BOID::v_rua = 400;
         BOID::margin = 100;
         BOID::borStrength = 18;
         BOID::vMax = 512;
         BOID::ranStrength = 0.125;
-        BOID::sepStrength = 150;
+        BOID::sepStrength = 256;
         BOID::aliStrength = 0.5;//0.125;
-        BOID::cohStrength = 1;
-        BOID::fleeStrength = 256;
+        BOID::cohStrength = 2;
+        BOID::fleeStrength = 512;
         BOID::sepRangeSq = 15*15;
         BOID::maxNbRange = 40;
         BOID::zpR = breite/(BOID::maxNbRange);
@@ -254,10 +254,10 @@ int main(){ //Mainsetup
         }
         if(mouseAvoid)
             nachbarCheck(pMouseBoid);
-
-        delta_t = uhr.restart();
         if(!spuren)
             window.clear(sf::Color(helligkeit,helligkeit,helligkeit,255)); //175
+
+        delta_t = uhr.restart();
         for(int i = 0; i < n; i++){ // bewegen + renderloop
             (*pBoid[i]).bewegen(rand(), delta_t.asSeconds(), colour_mode);
             (*pBoid[i]).drawBoid(pWindow);

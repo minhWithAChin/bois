@@ -7,7 +7,7 @@ struct BOID{
     int hashPos = 0;
     int nachbar = 0;
     int predCount = 0;
-    float dir = 0;// Richtung in Radien(2*PI = 360°)
+    float dir = 3;// Richtung in Radien(2*PI = 360°)
     float nbRange = maxNbRange;// Reichweite ab der man Nachbar ist (muss quadriert werden)
     bool isPred = false;
     int colourMode = 0;// Wie das Dreieck gefärbt werden soll
@@ -48,6 +48,9 @@ struct BOID{
         nachbar = 0;
         hashPos = 0;
         colourId();
+        dir=i%6;
+        v.y=(i%3)-1;
+        v.x=(i%3)-1;
     }
 
     virtual void behavior(){    //unique class behaviors
@@ -57,17 +60,18 @@ struct BOID{
                 cohesion();
             }
         }
-        v.x += sepBuffer.x;
-        v.y += sepBuffer.y;
-        v.x += avoidBuffer.x;
-        v.y += avoidBuffer.y;
         nbRangeUpdate();
     }
 
     public: void bewegen(int noise, float delta_t, int colour_mode){ //Bewegen
         behavior();
+        v.x += sepBuffer.x; v.y += sepBuffer.y;
+        if(predCount>0){
+            v.x += avoidBuffer.x; v.y += avoidBuffer.y;
+        }
         vLimit();
-        bMove(randDir(noise),delta_t);
+        bMove(randDir(noise));
+        tri.move(v*delta_t);             //#eigentliche Bewegung
         if(wrap){
             bWrap(tri.getPosition());
         } else{
@@ -82,8 +86,7 @@ struct BOID{
     void resetVar(){
         nachbar = 0;
         predCount = 0;
-        vNachbar.x = 0;
-        vNachbar.y = 0;
+        vNachbar = {0,0};
         m.x = 0;
         m.y = 0;
         sepBuffer={0,0};
@@ -125,17 +128,15 @@ struct BOID{
         return std::atan2(v.y,v.x);
     }
 
-    void bMove(float ranDir, float delta_t){
+    void bMove(float ranDir){
         dir = dirUpdate() + ranDir;
         tri.setRotation((dir+1.57)*57.3); // convert RAD to DEG and Rotates Sprite by 90°
         if(normMov){
             v.x = cos(dir)*v_rua;
             v.y = sin(dir)*v_rua;
-            tri.move(v*delta_t);
         } else{
             v.x += cos(dir);
             v.y += sin(dir);
-            tri.move(v*delta_t);
         }
     }
 
@@ -376,6 +377,7 @@ struct PRED : BOID{
         if(nachbar > 0){
             hunt(targetDeltaPos);
         }
+
     }
 
     void nachbarReaction(sf::Vector2f deltaPos, int dotDeltaPos, bool is_pred, sf::Vector2f v_n) override{
